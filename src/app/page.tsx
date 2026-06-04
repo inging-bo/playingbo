@@ -29,7 +29,7 @@ export default function Home() {
             <LoaderPinwheel /> 룰렛
           </Link>
         </CardContent>
-        <CardFooter className="gap-2">
+        <CardFooter className="gap-2 pb-safe">
           <a
             href="https://github.com/inging-bo/playingbo"
             target="_blank"

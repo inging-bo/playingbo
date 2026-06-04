@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { Minus, Plus } from "lucide-react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,65 +13,129 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-const SEGMENTS = [
-  { label: "대박!", emoji: "🎉", color: "oklch(0.78 0.16 145)" },
-  { label: "커피 쏘기", emoji: "☕", color: "oklch(0.72 0.12 55)" },
-  { label: "한 판 더", emoji: "🎮", color: "oklch(0.7 0.14 250)" },
-  { label: "휴식 5분", emoji: "😴", color: "oklch(0.75 0.1 200)" },
-  { label: "간식 타임", emoji: "🍕", color: "oklch(0.78 0.15 25)" },
-  { label: "춤추기", emoji: "💃", color: "oklch(0.72 0.18 330)" },
-  { label: "셀카!", emoji: "📸", color: "oklch(0.7 0.12 280)" },
-  { label: "다시 돌리기", emoji: "🔄", color: "oklch(0.8 0.08 100)" },
-] as const;
+const MIN_SEGMENTS = 2;
+const MAX_SEGMENTS = 16;
+const SPIN_MS = 4000;
 
-const SEGMENT_COUNT = SEGMENTS.length;
-const SEGMENT_ANGLE = 360 / SEGMENT_COUNT;
-const SPIN_MS = 2000;
+type Segment = {
+  id: string;
+  label: string;
+};
+
+let segmentIdCounter = 0;
+
+/** LAN HTTP 등 비보안 컨텍스트에서는 randomUUID가 없을 수 있음 */
+function createSegmentId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  segmentIdCounter += 1;
+  return `seg-${segmentIdCounter}-${Date.now().toString(36)}`;
+}
+
+function createSegment(label: string): Segment {
+  return { id: createSegmentId(), label };
+}
+
+function colorForIndex(index: number, total: number) {
+  const hue = Math.round((index * 360) / total) % 360;
+  return `oklch(0.72 0.14 ${hue})`;
+}
+
+const INITIAL_SEGMENTS: Segment[] = [
+  createSegment("항목 1"),
+  createSegment("항목 2"),
+];
 
 export function RouletteWheel() {
+  const listId = useId();
+  const [segments, setSegments] = useState<Segment[]>(INITIAL_SEGMENTS);
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
-  const [result, setResult] = useState<(typeof SEGMENTS)[number] | null>(
-    null
-  );
+  const [result, setResult] = useState<Segment | null>(null);
   const [pendingIndex, setPendingIndex] = useState<number | null>(null);
 
+  const segmentCount = segments.length;
+  const segmentAngle = 360 / segmentCount;
+  const canSpin =
+    !spinning &&
+    segments.every((s) => s.label.trim().length > 0) &&
+    segmentCount >= MIN_SEGMENTS;
+
   const wheelBackground = useMemo(() => {
-    const stops = SEGMENTS.map((seg, i) => {
-      const start = i * SEGMENT_ANGLE;
-      const end = (i + 1) * SEGMENT_ANGLE;
-      return `${seg.color} ${start}deg ${end}deg`;
-    }).join(", ");
+    const stops = segments
+      .map((_, i) => {
+        const start = i * segmentAngle;
+        const end = (i + 1) * segmentAngle;
+        return `${colorForIndex(i, segmentCount)} ${start}deg ${end}deg`;
+      })
+      .join(", ");
     return `conic-gradient(from -90deg, ${stops})`;
+  }, [segments, segmentCount, segmentAngle]);
+
+  useEffect(() => {
+    setResult(null);
+    setPendingIndex(null);
+  }, [segmentCount]);
+
+  const updateLabel = useCallback((index: number, label: string) => {
+    setSegments((prev) =>
+      prev.map((s, i) => (i === index ? { ...s, label } : s))
+    );
+  }, []);
+
+  const addSegment = useCallback(() => {
+    setSegments((prev) => {
+      if (prev.length >= MAX_SEGMENTS) return prev;
+      return [...prev, createSegment(`항목 ${prev.length + 1}`)];
+    });
+  }, []);
+
+  const removeSegment = useCallback((index: number) => {
+    setSegments((prev) =>
+      prev.length <= MIN_SEGMENTS
+        ? prev
+        : prev.filter((_, i) => i !== index)
+    );
   }, []);
 
   const spin = useCallback(() => {
-    if (spinning) return;
+    if (!canSpin) return;
 
-    const index = Math.floor(Math.random() * SEGMENT_COUNT);
+    const index = Math.floor(Math.random() * segmentCount);
     const extraSpins = 4 + Math.floor(Math.random() * 4);
-    const offset = 360 - (index * SEGMENT_ANGLE + SEGMENT_ANGLE / 2);
+    const offset = 360 - (index * segmentAngle + segmentAngle / 2);
 
     setResult(null);
     setPendingIndex(index);
     setSpinning(true);
     setRotation((r) => r + extraSpins * 360 + offset);
-  }, [spinning]);
+  }, [canSpin, segmentCount, segmentAngle]);
 
   const handleTransitionEnd = useCallback(() => {
     if (pendingIndex === null) return;
-    setResult(SEGMENTS[pendingIndex]);
+    setResult(segments[pendingIndex] ?? null);
     setPendingIndex(null);
     setSpinning(false);
-  }, [pendingIndex]);
+  }, [pendingIndex, segments]);
+
+  const labelSize =
+    segmentCount > 10
+      ? "text-[9px]"
+      : segmentCount > 6
+        ? "text-[10px]"
+        : "text-xs sm:text-sm";
 
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle>룰렛</CardTitle>
         <CardDescription>
-          돌려서 나온 항목대로 하기! (8칸)
+          칸마다 글자를 적고 돌려보세요. 기본 {MIN_SEGMENTS}칸, 최대{" "}
+          {MAX_SEGMENTS}칸.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-6">
@@ -91,19 +156,19 @@ export function RouletteWheel() {
             onTransitionEnd={handleTransitionEnd}
           >
             <div className="absolute inset-4 rounded-full bg-background/90 shadow-inner" />
-            {SEGMENTS.map((seg, i) => {
-              const angle = i * SEGMENT_ANGLE + SEGMENT_ANGLE / 2 - 90;
+            {segments.map((seg, i) => {
+              const angle = i * segmentAngle + segmentAngle / 2 - 90;
+              const display = seg.label.trim() || `칸 ${i + 1}`;
               return (
                 <div
-                  key={seg.label}
+                  key={seg.id}
                   className="absolute top-1/2 left-1/2 w-[42%] origin-left"
                   style={{ transform: `rotate(${angle}deg)` }}
                 >
-                  <span className="block truncate pl-2 text-xs font-semibold text-foreground sm:text-sm">
-                    <span className="mr-0.5" aria-hidden>
-                      {seg.emoji}
-                    </span>
-                    {seg.label}
+                  <span
+                    className={`block truncate pl-1 font-semibold text-foreground ${labelSize}`}
+                  >
+                    {display}
                   </span>
                 </div>
               );
@@ -115,21 +180,67 @@ export function RouletteWheel() {
         {result ? (
           <div className="flex flex-col items-center gap-2 text-center">
             <p className="text-sm text-muted-foreground">결과</p>
-            <Badge className="px-4 py-1.5 text-base">
-              <span className="mr-1.5" aria-hidden>
-                {result.emoji}
-              </span>
-              {result.label}
+            <Badge className="max-w-full px-4 py-1.5 text-base">
+              <span className="truncate">{result.label.trim()}</span>
             </Badge>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            {spinning ? "돌아가는 중…" : "버튼을 눌러 돌려보세요"}
+            {spinning
+              ? "돌아가는 중…"
+              : canSpin
+                ? "버튼을 눌러 돌려보세요"
+                : "모든 칸에 글자를 입력해 주세요"}
           </p>
         )}
+
+        <div className="w-full space-y-3">
+          <div className="flex items-center justify-between">
+            <Label id={listId}>칸 설정 ({segmentCount}칸)</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addSegment}
+              disabled={spinning || segmentCount >= MAX_SEGMENTS}
+            >
+              <Plus data-icon="inline-start" />
+              칸 추가
+            </Button>
+          </div>
+          <ul className="space-y-2" aria-labelledby={listId}>
+            {segments.map((seg, index) => (
+              <li key={seg.id} className="flex items-center gap-2">
+                <span
+                  className="size-3 shrink-0 rounded-full"
+                  style={{ background: colorForIndex(index, segmentCount) }}
+                  aria-hidden
+                />
+                <Input
+                  value={seg.label}
+                  onChange={(e) => updateLabel(index, e.target.value)}
+                  placeholder={`칸 ${index + 1}`}
+                  disabled={spinning}
+                  aria-label={`${index + 1}번 칸`}
+                  className="min-w-0 flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => removeSegment(index)}
+                  disabled={spinning || segmentCount <= MIN_SEGMENTS}
+                  aria-label={`${index + 1}번 칸 삭제`}
+                >
+                  <Minus />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </CardContent>
-      <CardFooter className="flex gap-2">
-        <Button className="flex-1" onClick={spin} disabled={spinning}>
+      <CardFooter className="flex gap-2 pb-safe">
+        <Button className="flex-1" onClick={spin} disabled={!canSpin}>
           {spinning ? "돌리는 중…" : "돌리기!"}
         </Button>
         <Button
@@ -140,7 +251,7 @@ export function RouletteWheel() {
             setPendingIndex(null);
           }}
         >
-          초기화
+          결과 지우기
         </Button>
       </CardFooter>
     </Card>
