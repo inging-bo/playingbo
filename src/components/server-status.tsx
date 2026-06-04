@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 type Health = { ok: boolean; time: string };
 
@@ -28,7 +29,7 @@ export function ServerStatus() {
   }
 
   return (
-    <Badge variant="outline">
+    <Badge variant="default" className={cn("p-3")}>
       서버 정상 · {new Date(health.time).toLocaleString("ko-KR")}
     </Badge>
   );
