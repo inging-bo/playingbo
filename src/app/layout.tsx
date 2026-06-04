@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { getSiteUrl } from "@/lib/site-url";
+
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -20,8 +22,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "playingbo — 랜덤게임 모음",
-  description: "랜덤게임 모음",
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: "playingbo — 랜덤게임 모음",
+    template: "%s — playingbo",
+  },
+  description: "친구와 함께 즐기는 랜덤 미니게임 모음",
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    siteName: "playingbo",
+    title: "playingbo — 랜덤게임 모음",
+    description: "친구와 함께 즐기는 랜덤 미니게임 모음",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "playingbo — 랜덤게임 모음",
+    description: "친구와 함께 즐기는 랜덤 미니게임 모음",
+  },
 };
 
 export default function RootLayout({
