@@ -169,8 +169,8 @@ export function RouletteWheel() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>룰렛</CardTitle>
-        <CardDescription>
+        <CardTitle hidden></CardTitle>
+        <CardDescription className="text-center">
           칸마다 글자를 적고 돌려보세요. 기본 {MIN_SEGMENTS}칸, 최대{" "}
           {MAX_SEGMENTS}칸.
         </CardDescription>
@@ -250,7 +250,7 @@ export function RouletteWheel() {
 
         <div className="w-full space-y-3">
           <div className="flex items-center justify-between">
-            <Label id={listId}>칸 설정 ({segmentCount}칸)</Label>
+            <Label id={listId}>칸 설정 ({segmentCount}칸) <Badge variant="outline">최소 {MIN_SEGMENTS} 칸, 최대 {MAX_SEGMENTS} 칸</Badge></Label>
             <Button
               type="button"
               variant="outline"
