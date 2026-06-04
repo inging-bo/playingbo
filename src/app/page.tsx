@@ -1,6 +1,9 @@
+import Link from "next/link";
+
 import { ServerStatus } from "@/components/server-status";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -16,12 +19,11 @@ export default function Home() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge>Next.js</Badge>
             <Badge variant="secondary">Tailwind</Badge>
             <Badge variant="outline">shadcn/ui</Badge>
           </div>
           <CardTitle className="text-2xl">playingbo</CardTitle>
-          <CardDescription>랜덤게임 모음 — 곧 게임이 추가됩니다.</CardDescription>
+          <CardDescription>랜덤게임 모음</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-start gap-3">
           <p className="text-sm text-muted-foreground">
@@ -30,12 +32,20 @@ export default function Home() {
           <ServerStatus />
         </CardContent>
         <CardFooter className="gap-2">
-          <Button render={<a href="https://github.com/inging-bo/playingbo" target="_blank" rel="noopener noreferrer" />}>
+          <a
+            href="https://github.com/inging-bo/playingbo"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(buttonVariants())}
+          >
             GitHub
-          </Button>
-          <Button variant="outline" disabled>
-            게임 준비 중
-          </Button>
+          </a>
+          <Link
+            href="/games/roulette"
+            className={cn(buttonVariants({ variant: "outline" }))}
+          >
+            룰렛
+          </Link>
         </CardFooter>
       </Card>
     </div>
