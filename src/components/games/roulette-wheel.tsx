@@ -94,10 +94,6 @@ export function RouletteWheel() {
     rotationRef.current = rotation;
   }, [rotation]);
 
-  useEffect(() => {
-    setResult(null);
-  }, [segmentCount]);
-
   const updateLabel = useCallback((index: number, label: string) => {
     setSegments((prev) =>
       prev.map((s, i) => (i === index ? { ...s, label } : s))
@@ -105,6 +101,7 @@ export function RouletteWheel() {
   }, []);
 
   const addSegment = useCallback(() => {
+    setResult(null);
     setSegments((prev) => {
       if (prev.length >= MAX_SEGMENTS) return prev;
       return [...prev, createSegment(`항목 ${prev.length + 1}`)];
@@ -112,6 +109,7 @@ export function RouletteWheel() {
   }, []);
 
   const removeSegment = useCallback((index: number) => {
+    setResult(null);
     setSegments((prev) =>
       prev.length <= MIN_SEGMENTS
         ? prev
