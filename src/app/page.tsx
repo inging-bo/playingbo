@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LoaderPinwheel } from "lucide-react";
+import { Coins, LoaderPinwheel } from "lucide-react";
 
 export default function Home() {
   return (
@@ -27,6 +27,12 @@ export default function Home() {
             className={cn(buttonVariants({ variant: "outline" }))}
           >
             <LoaderPinwheel /> 룰렛
+          </Link>
+          <Link
+            href="/games/coin"
+            className={cn(buttonVariants({ variant: "outline" }))}
+          >
+            <Coins /> 동전 던지기
           </Link>
         </CardContent>
         <CardFooter className="gap-2 pb-safe">
