@@ -15,11 +15,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { randomInt } from "@/lib/random-int";
 import { cn } from "@/lib/utils";
 
 const MIN_SEGMENTS = 2;
 const MAX_SEGMENTS = 16;
 const SPIN_MS = 3000;
+const JITTER_STEPS = 10000;
 
 type Segment = {
   id: string;
@@ -52,7 +54,10 @@ function targetRotationMod(index: number, segmentAngle: number) {
   const half = segmentAngle / 2;
   const margin = Math.max(1.5, half * 0.15);
   const maxJitter = Math.max(0, half - margin);
-  const jitter = (Math.random() * 2 - 1) * maxJitter;
+  // [-1, 1] 구간을 JITTER_STEPS 단위로 균등 분할해 뽑는다 (|jitter| <= maxJitter)
+  const jitter =
+    ((randomInt(2 * JITTER_STEPS + 1) - JITTER_STEPS) / JITTER_STEPS) *
+    maxJitter;
   return (360 - (center + jitter) + 360) % 360;
 }
 
@@ -120,8 +125,8 @@ export function RouletteWheel() {
   const spin = useCallback(() => {
     if (!canSpin) return;
 
-    const index = Math.floor(Math.random() * segmentCount);
-    const extraSpins = 4 + Math.floor(Math.random() * 4);
+    const index = randomInt(segmentCount);
+    const extraSpins = 4 + randomInt(4);
     const targetMod = targetRotationMod(index, segmentAngle);
     const currentMod = ((rotationRef.current % 360) + 360) % 360;
     let delta = targetMod - currentMod;
