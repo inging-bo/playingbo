@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { randomInt } from "@/lib/random-int";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -40,7 +41,7 @@ export function CoinFlip() {
   const flip = useCallback(() => {
     if (flippingRef.current) return;
 
-    const side: Side = Math.random() < 0.5 ? "heads" : "tails";
+    const side: Side = randomInt(2) === 0 ? "heads" : "tails";
     const extraTurns = MIN_EXTRA_TURNS + Math.floor(Math.random() * 3);
 
     pendingSideRef.current = side;
